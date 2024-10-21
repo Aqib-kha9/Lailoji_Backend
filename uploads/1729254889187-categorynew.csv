@@ -1,0 +1,4 @@
+name,priority,logo,isActive
+Electronics,1,http://example.com/logo1,active
+Fashion,2,http://example.com/logo2,inactive
+Home & Garden,3,http://example.com/logo3,active
