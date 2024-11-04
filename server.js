@@ -30,7 +30,6 @@ connectDB();
 
 const app = express();
 app.use(express.json());
-import cors from 'cors';
 
 // Allow specific origins
 const allowedOrigins = ['http://localhost:3000', 'https://lailojiadminp.onrender.com'];
