@@ -13,6 +13,14 @@ import subCategoryRoutes from './routes/subCategory.js';
 import subSubCategoryRoutes from './routes/subSubCategory.js';
 import importCategoryRoutes from './routes/bulkImportCategory.js';
 import brandRoutes from './routes/brand.js';
+import customerRoutes from './routes/customer.js';
+import orderRoutes from './routes/order.js';
+import customerAddressRoutes from './routes/customerAddress.js';
+import reviewRoutes from './routes/customeReview.js';
+import bannerRoutes from './routes/banner.js'
+import couponRoutes from './routes/coupon.js';
+import flashDealRoutes from './routes/flashDeal.js';
+import dealOfTheDayRoutes from './routes/dealOfTheDay.js'
 dotenv.config();
 
 connectDB();
@@ -22,9 +30,29 @@ connectDB();
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-    origin: '*', // allow all origins (for testing purposes)
-}));
+import cors from 'cors';
+
+// Allow specific origins
+const allowedOrigins = ['http://localhost:3000', 'https://lailojiadminp.onrender.com'];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
+
+// // CORS configuration
+// app.use(cors({
+//     origin: 'http://localhost:3000', // Replace with your frontend URL
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     credentials: true // If your frontend sends cookies or uses credentials
+// }));
 
 
 
@@ -71,6 +99,35 @@ app.use("/api/categories",importCategoryRoutes);
 // Brand Routes
 app.use('/api/brands',brandRoutes);
 
+// Customer Routes
+
+app.use("/api/customers",customerRoutes);
+
+
+// Register Order Routes
+app.use('/api/orders', orderRoutes);
+
+
+// CustomerAddress routes
+app.use('/api/customer-addresses', customerAddressRoutes);
+
+// Use the review routes
+app.use('/api/reviews', reviewRoutes);
+
+
+// Banner Routes
+app.use('/api/banners',bannerRoutes);
+
+
+// Coupon Routes 
+app.use('/api/coupons',couponRoutes);
+
+// Flash Deals Route
+
+app.use('/api/flash-deals',flashDealRoutes);
+
+// Deal of the Day
+app.use('/api/deal-days',dealOfTheDayRoutes);
 
 
 

@@ -1,17 +1,11 @@
-import cloudinary from 'cloudinary';
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
-// Configure Cloudinary
-cloudinary.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,   // Cloudinary Cloud Name
-    api_key: process.env.CLOUDINARY_API_KEY,        // Cloudinary API Key
-    api_secret: process.env.CLOUDINARY_API_SECRET,  // Cloudinary API Secret
-});
 
 // Setup multer storage for logo upload
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinary.v2,
+    cloudinary: cloudinary,
     params: {
         folder: 'brands', // Folder name in Cloudinary
         allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'svg', 'webp', 'bmp', 'tiff'], // Allowing more image formats

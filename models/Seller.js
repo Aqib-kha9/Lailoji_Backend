@@ -2,18 +2,20 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const sellerSchema = new mongoose.Schema({
-  firstName: { type: String },
-  lastName: { type: String },
-  address: { type: String },
+  fullName: { type: String, required:true},
+  shopName: { type: String, required:true},
+  address: { type: String ,required:true},
   phoneNum: { type: Number, required: true, unique: true },
   email: { type: String, required: true, unique: true, match: [/.+\@.+\..+/, 'Please fill a valid email address'] },
   password: { type: String, required: true },
-  aadhaar: { type: Number, required: true, unique: true },
-  pan: { type: String, required: true, unique: true },
-  image: { type: String, required: true },
-  otherDocuments: { type: String,},
+  aadhaarImage: { type: String, required: true },
+  panImage: { type: String, required: true},
+  sellerImage: { type: String, required: true },
+  shopLogo: { type: String,},
+  status:{type:Boolean,default:false},
   role: { type: String, default: 'Seller' }
 });
+
 
 //Hash password before saving 
 

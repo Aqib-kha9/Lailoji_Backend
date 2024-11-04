@@ -1,18 +1,13 @@
-import cloudinary from 'cloudinary';
+
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import path from 'path';
+import cloudinary from '../config/cloudinary.js';
 
-// Configure Cloudinary
-cloudinary.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,   // Cloudinary Cloud Name
-    api_key: process.env.CLOUDINARY_API_KEY,        // Cloudinary API Key
-    api_secret: process.env.CLOUDINARY_API_SECRET,  // Cloudinary API Secret
-});
 
 // Set up Cloudinary storage with multer
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinary.v2,
+    cloudinary: cloudinary,
     params: {
         folder: 'Lailoji', // Folder name in Cloudinary
         allowed_formats: ['jpg', 'jpeg', 'png'], // Allowed file types

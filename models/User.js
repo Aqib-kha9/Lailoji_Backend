@@ -2,15 +2,18 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: false },
+  firstName: { type: String, required: false },
+  lastName:{type:String,required:false},
   email: { type: String, required: false, unique: true },
   password: { type: String, required: false },
   phone: { type: Number, required: true, unique: true },
+  profileLogo:{type:String,required:false},
   role: {
     type: String,
     enum: ['Admin', 'Seller', 'Customer'], // Define available roles
     default: 'Customer' // Default role if none is assigned
   },
+
 });
 
 // Encrypt password before saving

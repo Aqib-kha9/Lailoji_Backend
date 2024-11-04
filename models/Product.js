@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 
 // Define the Product schema
 const productSchema = new mongoose.Schema({
-  // productName: {
-  //   type: String,
-  //   required: false,
-  // },
   productTitle: {
     type: String,
     required: true,
@@ -13,6 +9,10 @@ const productSchema = new mongoose.Schema({
   productDescription: {
     type: String,
     required: true,
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false, // By default, products are not featured
   },
   generalInfo: {
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
@@ -72,6 +72,8 @@ const productSchema = new mongoose.Schema({
     ref: 'Seller', // Reference to the Seller model
     required: true,
   },
+  totalSold:{type: Number,default:0},
+  totalSoldAmount:{type: Number,default:0}
 }, {
   timestamps: true,
 });
