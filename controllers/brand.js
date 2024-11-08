@@ -36,7 +36,7 @@ export const createBrand = async (req, res) => {
 // Get all brands
 export const getAllBrands = async (req, res) => {
   try {
-    const brands = await Brand.find();
+    const brands = await Brand.find().sort({ createdAt: -1 });;
     res.status(200).json(brands);
   } catch (error) {
     res.status(500).json({ message: error.message });

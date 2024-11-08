@@ -17,8 +17,8 @@ const subSubCategorySchema = new mongoose.Schema({
         required: true
     },
     priority: {
-        type: Number,
-        default: 0
+        type: String,
+        required: true,
     },
 }, { timestamps: true });
 

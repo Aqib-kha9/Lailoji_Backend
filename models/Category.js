@@ -7,7 +7,7 @@ const categorySchema = new mongoose.Schema({
         unique: true,
     },
     priority: {
-        type: Number,
+        type: String,
         required: true,
     },
     logo: {

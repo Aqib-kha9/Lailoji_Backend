@@ -16,7 +16,7 @@ export const registerSeller = async (req, res) => {
         confirmPass,
         role
     } = req.body;
-
+    console.log(req);
     // Validate input (ensure password matches confirmPass, etc.)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -98,21 +98,24 @@ export const getAllSellers = async (req, res) => {
         $project: {
           _id: 1,
           shopName: 1,
-          fullName: 1, 
+          fullName: 1,
           phoneNum: 1,
           status: 1,
-          shopLogo:1,
-          address:1,
-          email:1,
+          shopLogo: 1,
+          address: 1,
+          email: 1,
           totalProducts: 1,
           totalOrders: 1,
         },
       },
-    ]);
+    ]).sort({ createdAt: -1 }); // Initially sort by createdAt in descending order
+
+    // Reverse the sellers array to send the last added sellers first
+    const reversedSellers = sellers.reverse();
 
     res.status(200).json({
       success: true,
-      data: sellers,
+      data: reversedSellers, // Send reversed sellers
     });
   } catch (error) {
     res.status(500).json({
@@ -122,6 +125,7 @@ export const getAllSellers = async (req, res) => {
     });
   }
 };
+
 
 
 // Update seller status

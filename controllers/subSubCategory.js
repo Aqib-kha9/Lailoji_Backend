@@ -35,7 +35,7 @@ export const getAllSubSubCategories = async (req, res) => {
     try {
         const subSubCategories = await SubSubCategory.find()
             .populate('subCategoryId', 'name')
-            .populate('categoryId', 'name');
+            .populate('categoryId', 'name').sort({createdAt:-1})
         res.status(200).json(subSubCategories);
     } catch (error) {
         res.status(500).json({ message: error.message });

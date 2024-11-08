@@ -32,7 +32,7 @@ export const createSubCategory = async (req, res) => {
 // Get all SubCategories
 export const getAllSubCategories = async (req, res) => {
     try {
-        const subCategories = await SubCategory.find().populate('categoryId', 'name'); // populate to show category name
+        const subCategories = await SubCategory.find().populate('categoryId', 'name').sort({ createdAt: -1 }); // populate to show category name
         res.status(200).json(subCategories);
     } catch (error) {
         res.status(500).json({ message: error.message });

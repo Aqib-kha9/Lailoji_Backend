@@ -20,7 +20,8 @@ import reviewRoutes from './routes/customeReview.js';
 import bannerRoutes from './routes/banner.js'
 import couponRoutes from './routes/coupon.js';
 import flashDealRoutes from './routes/flashDeal.js';
-import dealOfTheDayRoutes from './routes/dealOfTheDay.js'
+import dealOfTheDayRoutes from './routes/dealOfTheDay.js';
+import withdrawalMethodRoutes from './routes/withdrawalMeth.js';
 dotenv.config();
 
 connectDB();
@@ -128,6 +129,8 @@ app.use('/api/flash-deals',flashDealRoutes);
 // Deal of the Day
 app.use('/api/deal-days',dealOfTheDayRoutes);
 
+// add seller withdrawal methode
+app.use('/api/withdrawal-methods',withdrawalMethodRoutes)
 
 
 

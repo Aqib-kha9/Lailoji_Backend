@@ -4,7 +4,8 @@ const subCategorySchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true
+        // unique: true,
+        trim: true, 
     },
     categoryId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -12,8 +13,8 @@ const subCategorySchema = new mongoose.Schema({
         required: true
     },
     priority: {
-        type: Number,
-        default: 0
+        type: String,
+        required: true,
     },
 }, { timestamps: true });
 

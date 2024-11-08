@@ -33,7 +33,8 @@ export const createCategory = async (req, res) => {
 // Get All Categories
 export const getAllCategories = async (req, res) => {
     try {
-        const categories = await Category.find();
+        // Fetch categories sorted by creation date (earliest created first)
+        const categories = await Category.find().sort({ createdAt: -1 });
         res.status(200).json({ success: true, categories });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

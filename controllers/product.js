@@ -6,6 +6,11 @@ import path from 'path';
 import { Parser } from 'json2csv'; // Ensure you have this package installed
 import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
+import Category from '../models/Category.js';
+import SubCategory from '../models/subCategory.js';
+import SubSubCategory from '../models/subSubCategory.js';
+import Brand from '../models/Brand.js';
+
 
 // Get the directory name in ES6 modules
 const __filename = fileURLToPath(import.meta.url);
@@ -162,7 +167,7 @@ export const getAllProducts = async (req, res) => {
       .populate('generalInfo.subCategory') // Populate the subCategory field
       .populate('generalInfo.subSubCategory') // Populate the subSubCategory field
       .populate('generalInfo.brand') // Populate the brand field
-      .populate('seller'); // Populate the seller field
+      .populate('seller').sort({createdAt: -1}) // Populate the seller field
 
     // Check if products are found
     if (!products || products.length === 0) {
@@ -478,158 +483,174 @@ export const exportData = async (req, res) => {
 };
 
 
+
 export const bulkImportProducts = async (req, res) => {
   try {
-      // Get the uploaded file path
-      const filePath = req.file.path;
+    const filePath = req.file.path;
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    
+    console.log("Parsed Data:", data); // Log the data for debugging
 
-      // Parse the Excel file
-      const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0]; // Assuming data is in the first sheet
-      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    if (!data || data.length === 0) {
+      return res.status(400).json({ message: 'No data found to import.' });
+    }
 
-      // Check if the data array is empty
-      if (!data || data.length === 0) {
-          return res.status(400).json({ message: 'No data found to import.' });
+    const products = [];
+    const errorMessages = [];
+
+    for (const item of data) {
+      const {
+        productTitle,
+        productDescription,
+        isFeatured,
+        seller,
+        'generalInfo.category': category,
+        'generalInfo.subCategory': subCategory,
+        'generalInfo.subSubCategory': subSubCategory,
+        'generalInfo.brand': brand,
+        'generalInfo.productType': productType,
+        'generalInfo.unit': unit,
+        'generalInfo.productSKU': productSKU,
+        'settings.manufacturer': manufacturer,
+        'settings.madeIn': madeIn,
+        'settings.fssaiLicenseNumber': fssaiLicenseNumber,
+        'settings.isReturnable': isReturnable,
+        'settings.isCODAllowed': isCODAllowed,
+        'settings.isCancelable': isCancelable,
+        'settings.totalAllowedQuantity': totalAllowedQuantity,
+        'settings.productStatus': productStatus,
+        'pricing.unitPrice': unitPrice,
+        'pricing.minimumOrderQty': minimumOrderQty,
+        'pricing.currentStockQty': currentStockQty,
+        'pricing.discountType': discountType,
+        'pricing.discountAmount': discountAmount,
+        'pricing.taxAmount': taxAmount,
+        'pricing.taxCalculation': taxCalculation,
+        'pricing.shippingCost': shippingCost,
+        'images.productThumbnail': productThumbnail,
+        additionalImage_1,
+        additionalImage_2,
+        'seo.metaTitle': metaTitle,
+        'seo.metaDescription': metaDescription,
+        'seo.metaImage': metaImage,
+      } = item;
+
+      try {
+        if (!productSKU) {
+          throw new Error('Missing product SKU');
+        }
+
+        console.log(`Processing SKU: ${productSKU}, Seller: ${seller}, Category: ${category}, SubCategory: ${subCategory}, SubSubCategory: ${subSubCategory}, Brand: ${brand}`);
+
+        // Look up IDs based on names, with trimmed whitespace and case insensitivity
+        const sellerDoc = await Seller.findOne({ fullName: new RegExp(`^${seller.trim()}$`, 'i') });
+        console.log(`Seller '${seller}': `, sellerDoc ? "Found" : "Not Found"); // Log if the seller was found
+
+        const categoryDoc = await Category.findOne({ name: new RegExp(`^${category.trim()}$`, 'i') });
+        const subCategoryDoc = await SubCategory.findOne({ name: new RegExp(`^${subCategory.trim()}$`, 'i') });
+        const subSubCategoryDoc = await SubSubCategory.findOne({ name: new RegExp(`^${subSubCategory.trim()}$`, 'i') });
+        const brandDoc = await Brand.findOne({ name: new RegExp(`^${brand.trim()}$`, 'i') });
+
+        // Collect missing fields for detailed error message
+        const missingFields = [];
+        if (!sellerDoc) missingFields.push('seller');
+        if (!categoryDoc) missingFields.push('category');
+        if (!subCategoryDoc) missingFields.push('subCategory');
+        if (!subSubCategoryDoc) missingFields.push('subSubCategory');
+        if (!brandDoc) missingFields.push('brand');
+
+        if (missingFields.length > 0) {
+          throw new Error(`Missing IDs for fields: ${missingFields.join(', ')}`);
+        }
+
+        const newProductData = {
+          productTitle,
+          productDescription,
+          isFeatured: isFeatured || false,
+          generalInfo: {
+            category: categoryDoc._id,
+            subCategory: subCategoryDoc._id,
+            subSubCategory: subSubCategoryDoc._id,
+            brand: brandDoc._id,
+            productType,
+            unit,
+            productSKU,
+          },
+          settings: {
+            manufacturer,
+            madeIn,
+            fssaiLicenseNumber,
+            isReturnable: isReturnable || false,
+            isCODAllowed: isCODAllowed || false,
+            isCancelable: isCancelable || false,
+            totalAllowedQuantity: totalAllowedQuantity || 0,
+            productStatus: productStatus || 'Not-Approved',
+          },
+          pricing: {
+            unitPrice,
+            minimumOrderQty: minimumOrderQty || 1,
+            currentStockQty: currentStockQty || 0,
+            discountType,
+            discountAmount: discountAmount || 0,
+            taxAmount: taxAmount || 0,
+            taxCalculation,
+            shippingCost: shippingCost || 0,
+          },
+          images: {
+            productThumbnail,
+            additionalImages: [additionalImage_1, additionalImage_2].filter(img => img),
+          },
+          seo: {
+            metaTitle,
+            metaDescription,
+            metaImage,
+            indexing: {
+              index: true,
+              noIndex: false,
+              noFollow: false,
+              noArchive: false,
+              noSnippet: false,
+              noImageIndex: false,
+              maxSnippet: -1,
+              maxVideoPreview: -1,
+              maxImagePreview: -1,
+            },
+          },
+          seller: sellerDoc._id,
+        };
+
+        products.push(newProductData);
+      } catch (error) {
+        errorMessages.push(`Error processing SKU '${productSKU}': ${error.message}`);
       }
+    }
 
-      console.log('Parsed Excel Data:', data); // Log the parsed data
-
-      // Prepare to store products
-      const products = [];
-
-      for (const item of data) {
-          if (!item) {
-              console.error('Received undefined item in data array');
-              continue; // Skip this iteration if item is undefined
-          }
-
-          console.log('Processing item:', item); // Log the current item
-
-          const {
-              productTitle,
-              productDescription,
-              isFeatured,
-              seller,
-              'generalInfo.category': category,
-              'generalInfo.subCategory': subCategory,
-              'generalInfo.subSubCategory': subSubCategory,
-              'generalInfo.brand': brand,
-              'generalInfo.productType': productType,
-              'generalInfo.unit': unit,
-              'generalInfo.productSKU': productSKU,
-              'settings.manufacturer': manufacturer,
-              'settings.madeIn': madeIn,
-              'settings.fssaiLicenseNumber': fssaiLicenseNumber,
-              'settings.isReturnable': isReturnable,
-              'settings.isCODAllowed': isCODAllowed,
-              'settings.isCancelable': isCancelable,
-              'settings.totalAllowedQuantity': totalAllowedQuantity,
-              'settings.productStatus': productStatus,
-              'pricing.unitPrice': unitPrice,
-              'pricing.minimumOrderQty': minimumOrderQty,
-              'pricing.currentStockQty': currentStockQty,
-              'pricing.discountType': discountType,
-              'pricing.discountAmount': discountAmount,
-              'pricing.taxAmount': taxAmount,
-              'pricing.taxCalculation': taxCalculation,
-              'pricing.shippingCost': shippingCost,
-              'images.productThumbnail': productThumbnail,
-              additionalImage_1,
-              additionalImage_2,
-              'seo.metaTitle': metaTitle,
-              'seo.metaDescription': metaDescription,
-              'seo.metaImage': metaImage,
-          } = item;
-
-          // Log the SKU being processed
-          console.log(`Processing SKU: ${productSKU}`);
-
-          // Check if the product SKU is valid
-          if (!productSKU) {
-              console.log('SKU is undefined for item:', item);
-              continue; // Skip processing this item
-          }
-
-          // Check if the product SKU already exists
-          const existingProduct = await Product.findOne({ productSKU });
-          if (existingProduct) {
-              return res.status(400).json({ message: `Product with SKU '${productSKU}' already exists.` });
-          }
-
-          // Prepare new product data
-          const newProductData = {
-              productTitle,
-              productDescription,
-              isFeatured: isFeatured || false, // Default to false if not provided
-              generalInfo: {
-                  category: new mongoose.Types.ObjectId(category), // Assuming category is provided as an ID string
-                  subCategory: new mongoose.Types.ObjectId(subCategory),
-                  subSubCategory: new mongoose.Types.ObjectId(subSubCategory),
-                  brand: new mongoose.Types.ObjectId(brand),
-                  productType,
-                  unit,
-                  productSKU,
-              },
-              settings: {
-                  manufacturer,
-                  madeIn,
-                  fssaiLicenseNumber,
-                  isReturnable: isReturnable || false,
-                  isCODAllowed: isCODAllowed || false,
-                  isCancelable: isCancelable || false,
-                  totalAllowedQuantity: totalAllowedQuantity || 0,
-                  productStatus: productStatus || 'Not-Approved',
-              },
-              pricing: {
-                  unitPrice,
-                  minimumOrderQty: minimumOrderQty || 1,
-                  currentStockQty: currentStockQty || 0,
-                  discountType,
-                  discountAmount: discountAmount || 0,
-                  taxAmount: taxAmount || 0,
-                  taxCalculation,
-                  shippingCost: shippingCost || 0,
-              },
-              images: {
-                  productThumbnail,
-                  additionalImages: [additionalImage_1, additionalImage_2].filter(img => img), // Filter out undefined values
-              },
-              seo: {
-                  metaTitle,
-                  metaDescription,
-                  metaImage,
-                  indexing: {
-                      index: true,
-                      noIndex: false,
-                      noFollow: false,
-                      noArchive: false,
-                      noSnippet: false,
-                      noImageIndex: false,
-                      maxSnippet: -1,
-                      maxVideoPreview: -1,
-                      maxImagePreview: -1,
-                  },
-              },
-              seller: new mongoose.Types.ObjectId(seller), // Assuming seller is provided as an ID string
-          };
-
-          products.push(newProductData);
-      }
-
-      console.log('Products to be inserted:', products);
-
-      // Insert products in bulk
+    if (products.length > 0) {
       await Product.insertMany(products);
+    }
 
-      // Delete the file after processing
-      fs.unlinkSync(filePath);
+    fs.unlinkSync(filePath); // Delete the uploaded file after processing
 
-      res.status(201).json({ message: 'Products imported successfully' });
+    if (errorMessages.length > 0) {
+      return res.status(207).json({
+        message: 'Products partially imported',
+        errors: errorMessages,
+        successCount: products.length,
+      });
+    }
+
+    res.status(201).json({
+      message: 'All products imported successfully',
+      successCount: products.length,
+    });
   } catch (error) {
-      console.error('Error during bulk import:', error); // Log the error for debugging
-      res.status(500).json({ message: error.message });
+    console.error('Error during bulk import:', error);
+    res.status(500).json({ message: error.message });
   }
 };
+
+
 
 
