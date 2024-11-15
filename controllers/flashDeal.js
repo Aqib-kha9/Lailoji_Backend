@@ -1,17 +1,23 @@
 import FlashDeal from '../models/FlashDeal.js';
 import cloudinary from '../config/cloudinary.js';
 
-// Add new flash deal controller
 export const addFlashDeal = async (req, res) => {
   try {
     const { title, startDate, endDate, products = [] } = req.body; // Default products to an empty array
-    console.log(startDate,endDate)
+    console.log(startDate, endDate);
+
     if (!title || !startDate || !endDate) {
       return res.status(400).json({ message: 'Title, Start Date, and End Date are required.' });
     }
 
-    const formattedStartDate = new Date(startDate.split('-').reverse().join('-'));
-    const formattedEndDate = new Date(endDate.split('-').reverse().join('-'));
+    // Create Date objects from the provided strings
+    const formattedStartDate = new Date(startDate);
+    const formattedEndDate = new Date(endDate);
+
+    // Validate if the dates are valid
+    if (isNaN(formattedStartDate.getTime()) || isNaN(formattedEndDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date format for startDate or endDate.' });
+    }
 
     if (formattedStartDate >= formattedEndDate) {
       return res.status(400).json({ message: 'Start date must be before the end date.' });
@@ -54,14 +60,15 @@ export const addFlashDeal = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating flash deal:', error);
-    res.status(500).json({ message: 'An error occurred while creating the flash deal.' });
+    res.status(500).json({ message: 'An error occurred while creating the flash deal.', error });
   }
 };
+
 
 // Controller function to get all flash deals
 export const getAllFlashDeals = async (req, res) => {
     try {
-      const flashDeals = await FlashDeal.find(); // Retrieve all flash deals from the database
+      const flashDeals = await FlashDeal.find().sort({createdAt:-1}); // Retrieve all flash deals from the database
       res.status(200).json(flashDeals); // Send flash deals as JSON
     } catch (error) {
       console.error("Error fetching flash deals:", error);
@@ -96,6 +103,7 @@ export const updateFlashDeal = async (req, res) => {
   const uploadedFile = req.file; // Access the uploaded file
 
   try {
+    // Retrieve the flash deal by ID
     const flashDeal = await FlashDeal.findById(id);
     if (!flashDeal) {
       return res.status(404).json({ message: 'Flash deal not found' });
@@ -103,20 +111,32 @@ export const updateFlashDeal = async (req, res) => {
 
     // Format dates and validate date order
     let formattedStartDate, formattedEndDate;
+
     if (startDate) {
-      formattedStartDate = new Date(startDate.split('-').reverse().join('-'));
+      // If startDate exists, format it to a valid Date object
+      formattedStartDate = new Date(startDate);
+      if (isNaN(formattedStartDate)) {
+        return res.status(400).json({ message: 'Invalid start date format.' });
+      }
     }
+
     if (endDate) {
-      formattedEndDate = new Date(endDate.split('-').reverse().join('-'));
+      // If endDate exists, format it to a valid Date object
+      formattedEndDate = new Date(endDate);
+      if (isNaN(formattedEndDate)) {
+        return res.status(400).json({ message: 'Invalid end date format.' });
+      }
     }
+
+    // Validate if startDate is before endDate
     if (formattedStartDate && formattedEndDate && formattedStartDate >= formattedEndDate) {
       return res.status(400).json({ message: 'Start date must be before the end date.' });
     }
 
-    // Update fields if provided in the request
+    // Update the flash deal fields if provided
     if (title) flashDeal.title = title;
-    if (startDate) flashDeal.startDate = formattedStartDate;
-    if (endDate) flashDeal.endDate = formattedEndDate;
+    if (formattedStartDate) flashDeal.startDate = formattedStartDate;
+    if (formattedEndDate) flashDeal.endDate = formattedEndDate;
     if (products.length > 0) flashDeal.products = products;
     flashDeal.activeProducts = products.length; // Update active products count
 
@@ -129,6 +149,7 @@ export const updateFlashDeal = async (req, res) => {
       const { width, height } = image;
       const aspectRatio = width / height;
 
+      // Validate aspect ratio to be close to 5:1
       if (Math.abs(aspectRatio - 5) >= 0.1) {
         await cloudinary.uploader.destroy(publicId); // Delete image if aspect ratio is invalid
         return res.status(400).json({ message: 'Image must have a 5:1 aspect ratio.' });
@@ -138,6 +159,7 @@ export const updateFlashDeal = async (req, res) => {
       flashDeal.bannerImage = bannerImageUrl;
     }
 
+    // Save the updated flash deal
     const updatedFlashDeal = await flashDeal.save();
     return res.status(200).json({
       message: 'Flash deal updated successfully',

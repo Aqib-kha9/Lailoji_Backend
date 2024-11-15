@@ -53,7 +53,7 @@ export const createBanner = async (req, res) => {
 // Get all banners
 export const getAllBanners = async (req, res) => {
   try {
-    const banners = await Banner.find().populate('product');
+    const banners = await Banner.find().populate('product').sort({createdAt:-1});
     res.status(200).json(banners);
   } catch (error) {
     res.status(500).json({ message: error.message });

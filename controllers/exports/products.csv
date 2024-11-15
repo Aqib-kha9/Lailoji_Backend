@@ -1,2 +1,6 @@
 "SL","Product Name","Product Type","Unit Price","Show As Featured","Active Status","Action"
-1,"fkfkjf","Daily Use",767,"Yes","Active","Edit"
+1,"T-Shirt For Men","Daily Use",767,"No","Active","Edit"
+2,"Sample Product 1","Electronics",100,"Yes","Active","Edit"
+3,"Sample Product 2","Furniture",200,"Yes","Active","Edit"
+4,"Product C","Physical",500,"Yes","Active","Edit"
+5,"Product D","Physical",300,"Yes","Active","Edit"

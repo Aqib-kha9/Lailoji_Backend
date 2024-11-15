@@ -5,68 +5,74 @@ import jwt from 'jsonwebtoken';
 
 import uploadToCloudinary from '../config/cloudinary.js'; // Ensure you have this configured correctly
 
+
 export const registerSeller = async (req, res) => {
-    const {
-        fullName,
-        shopName,
-        address,
-        phoneNum,
-        email,
-        password,
-        confirmPass,
-        role
-    } = req.body;
-    console.log(req);
-    // Validate input (ensure password matches confirmPass, etc.)
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+  const {
+    fullName,
+    shopName,
+    address,
+    phoneNum,
+    email,
+    password,
+    confirmPass,
+    role = 'Seller' // Default role to 'Seller' if not provided
+  } = req.body;
+
+  console.log('Request body:', req.body);
+
+  // Validate input
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('Validation errors:', errors.array());
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  // Check if passwords match
+  if (password !== confirmPass) {
+    console.log('Password mismatch error');
+    return res.status(400).json({ message: 'Passwords do not match' });
+  }
+
+  try {
+    // Check if the seller already exists by phone number or email
+    const sellerExists = await Seller.findOne({ $or: [{ email }, { phoneNum }] });
+    if (sellerExists) {
+      const existingField = sellerExists.email === email ? 'email' : 'phone number';
+      console.log(`Seller already exists with ${existingField}:`, email || phoneNum);
+      return res.status(400).json({ success:false, message: `Seller with this ${existingField} already exists` });
     }
 
-    // Check if passwords match
-    if (password !== confirmPass) {
-        return res.status(400).json({ message: "Passwords do not match" });
-    }
+    // Create a new seller object using image URLs from req.imageUrls
+    const newSeller = new Seller({
+      fullName,
+      shopName,
+      address,
+      phoneNum,
+      email,
+      password, // Password will be hashed in the 'pre-save' hook
+      aadhaarImage: req.imageUrls?.aadhaarImage || '',
+      panImage: req.imageUrls?.panImage || '',
+      sellerImage: req.imageUrls?.sellerImage || '',
+      shopLogo: req.imageUrls?.shopLogo || '', // Handle optional field
+      role
+    });
 
-    try {
-        // Check if the seller already exists by phone number or email
-        let sellerExists = await Seller.findOne({ $or: [{ email }, { phoneNum }] });
-        if (sellerExists) {
-            return res.status(400).json({ message: 'Seller with this email or phone number already exists' });
-        }
+    console.log('Saving new seller:', newSeller);
 
-        // // Check if Aadhaar or PAN images are unique
-        // let documentExists = await Seller.findOne({ $or: [{ aadhaarImage: req.imageUrls.aadhaarImage }, { panImage: req.imageUrls.panImage }] });
-        // if (documentExists) {
-        //     return res.status(400).json({ message: 'Seller with this Aadhaar or PAN image already exists' });
-        // }
+    // Save the seller to the database
+    await newSeller.save();
 
-        // Create a new seller object using image URLs from req.imageUrls
-        const newSeller = new Seller({
-            fullName,
-            shopName,
-            address,
-            phoneNum,
-            email,
-            password, // Password will be hashed in the 'pre-save' hook
-            aadhaarImage: req.imageUrls.aadhaarImage,
-            panImage: req.imageUrls.panImage,
-            sellerImage: req.imageUrls.sellerImage,
-            shopLogo: req.imageUrls.shopLogo || '', // Handle optional field
-            role: role || 'Seller' // Use provided role or default to 'Seller'
-        });
-        console.log(req.imageUrls.shopLogo);
-        // Save the seller to the database
-        await newSeller.save();
+    // Return success response
+    res.status(201).json({ message: 'Seller registered successfully', sellerId: newSeller._id });
 
-        // Return success response
-        res.status(201).json({ message: 'Seller registered successfully', sellerId: newSeller._id });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error. Please try again later.' });
-    }
+  } catch (error) {
+    console.error('Error saving seller:', error);
+    res.status(500).json({ message: 'Server Error. Please try again later.' });
+  }
 };
+
+
+
 
 
 export const getAllSellers = async (req, res) => {

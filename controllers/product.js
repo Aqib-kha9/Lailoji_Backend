@@ -139,21 +139,24 @@ export const addProduct = async (req, res) => {
     // Return the saved product as a response
     return res.status(201).json({
       message: 'Product added successfully',
-      product: savedProduct
+      product: savedProduct,
+      success: true,
     });
   } catch (error) {
     // Specific error handling for duplicate SKU
     if (error.code === 11000) {
       return res.status(400).json({
         message: 'Duplicate productSKU. Please use a unique SKU.',
-        error: error.message
+        error: error.message,
+        success:false
       });
     }
 
     console.error('Error adding product:', error);
     return res.status(500).json({
       message: 'Error adding product',
-      error: error.message
+      error: error.message,
+      success:false
     });
   }
 };
@@ -200,7 +203,7 @@ export const getProductById = async (req, res) => {
 
     // Fetch the product by ID and populate the brand and category data
     const product = await Product.findById(id)
-      .populate('generalInfo.brand', 'name') // Replace 'name' with the field(s) you want from the Brand model
+      .populate('generalInfo.brand','name') // Replace 'name' with the field(s) you want from the Brand model
       .populate('generalInfo.category', 'name') // Replace 'name' with the field(s) you want from the Category model
       .populate('generalInfo.subCategory', 'name') // If you also want to include subCategory
       .populate('generalInfo.subSubCategory', 'name'); // If you also want to include subSubCategory
@@ -309,6 +312,37 @@ export const getProductsBySellerAndCategory = async (req, res) => {
 };
 
 
+// Toggle Product Status (Approved or Not-Approved)
+export const toggleProductStatus = async (req, res) => {
+  const { id: productId } = req.params;
+
+  try {
+    // Find the product by ID
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Toggle the productStatus field between "Approved" and "Not-Approved"
+    product.settings.productStatus =
+      product.settings.productStatus === "Approved" ? "Not-Approved" : "Approved";
+
+    // Save the updated product
+    await product.save();
+
+    return res.status(200).json({
+      message: 'Product status updated successfully',
+      product,
+    });
+  } catch (error) {
+    console.error('Error updating product status:', error);
+    return res.status(500).json({
+      message: 'Error updating product status',
+      error: error.message,
+    });
+  }
+};
 
 
 
@@ -348,9 +382,10 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found or you do not have permission to update this product' });
     }
 
-    // Update the product fields with the provided data
-    Object.keys(updatedFields).forEach(key => {
+    // Update the product fields with the provided data, but retain existing data if not provided
+    Object.keys(product.toObject()).forEach(key => {
       if (updatedFields[key] !== undefined) {
+        // If the field is provided in the request body, update it
         product[key] = updatedFields[key];
       }
     });
@@ -364,6 +399,7 @@ export const updateProduct = async (req, res) => {
     return res.status(500).json({ message: 'Error updating product', error: error.message });
   }
 };
+
 
 export const deleteProduct = async (req, res) => {
   const { productId } = req.params;

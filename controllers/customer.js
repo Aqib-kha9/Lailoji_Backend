@@ -165,8 +165,10 @@ export const toggleBlockStatus = async (req, res) => {
       // Save the updated customer
       await customer.save();
   
-      res.status(200).json({ message: `Customer ${isBlock === 'Block' ? 'blocked' : 'unblocked'} successfully`, customer });
+      res.status(200).json({ message: `Customer ${isBlock === 'Block' ? 'blocked' : 'unblocked'} successfully`, customer,success: true });
     } catch (error) {
-      res.status(500).json({ message: 'Error updating block status', error: error.message });
+      console.log(error);
+      res.status(500).json({ message: 'Error updating block status', error: error.message,success:false });
+
     }
   };

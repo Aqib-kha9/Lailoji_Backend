@@ -33,8 +33,11 @@ const app = express();
 app.use(express.json());
 
 // Allow specific origins
-const allowedOrigins = ['http://localhost:3000', 'https://lailojiadminp.onrender.com'];
-
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://lailojiadminp.onrender.com',
+  'http://localhost:5000' // Add localhost:5000 to allowed origins
+];
 const corsOptions = {
   origin: (origin, callback) => {
     if (allowedOrigins.includes(origin) || !origin) {

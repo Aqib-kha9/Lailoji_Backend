@@ -9,7 +9,7 @@ import {
   exportData,
   getProductById,
   getProductsBySellerAndCategory,
-
+  toggleProductStatus
 } from "../controllers/product.js"; // Adjust the path as needed
 import sellerAuth from "../middleware/sellerAuth.js";
 import handleImageUpload from "../middleware/productImage.js";
@@ -36,6 +36,9 @@ router.post(
   handleImageUpload, // Then process images to get URLs from Cloudinary
   addProduct // Finally, call the controller to add product details
 );
+
+router.put("/:id/status",toggleProductStatus)
+
 // Route to get products by seller and category
 router.get("/category", getProductsBySellerAndCategory);
 
