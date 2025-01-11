@@ -22,6 +22,10 @@ import couponRoutes from './routes/coupon.js';
 import flashDealRoutes from './routes/flashDeal.js';
 import dealOfTheDayRoutes from './routes/dealOfTheDay.js';
 import withdrawalMethodRoutes from './routes/withdrawalMeth.js';
+import notificationRoutes from './routes/notification.js';
+import deviceTokenRoutes from './routes/deviceToken.js';
+import refundReqRoutes from './routes/refundReq.js';
+import smsTemplateRoutes from './routes/smsTemplate.js'
 dotenv.config();
 
 connectDB();
@@ -32,30 +36,31 @@ connectDB();
 const app = express();
 app.use(express.json());
 
-// Allow specific origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://lailojiadminp.onrender.com',
-  'http://localhost:5000' // Add localhost:5000 to allowed origins
-];
+// // Allow specific origins
+// const allowedOrigins = [
+//   'http://localhost:3000',
+//   'https://lailojiadminp.onrender.com',
+//   'http://localhost:5000' // Add localhost:5000 to allowed origins
+// ];
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (allowedOrigins.includes(origin) || !origin) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+// };
+
+// app.use(cors(corsOptions));
+
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*', // Allow all origins
 };
 
 app.use(cors(corsOptions));
 
-// // CORS configuration
-// app.use(cors({
-//     origin: 'http://localhost:3000', // Replace with your frontend URL
-//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//     credentials: true // If your frontend sends cookies or uses credentials
-// }));
+
 
 
 
@@ -73,6 +78,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get("/",(req,res)=>{
     res.send("Hi i am your home route");
 })
+
+
+
 
 // User Routes
 
@@ -133,7 +141,19 @@ app.use('/api/flash-deals',flashDealRoutes);
 app.use('/api/deal-days',dealOfTheDayRoutes);
 
 // add seller withdrawal methode
-app.use('/api/withdrawal-methods',withdrawalMethodRoutes)
+app.use('/api/withdrawal-methods',withdrawalMethodRoutes);
+
+// Send Notification 
+app.use('/api/notifications', notificationRoutes);
+
+// Device Token
+app.use('/api/device-tokens',deviceTokenRoutes);
+
+// Refund Req
+app.use('/api/refund-req',refundReqRoutes);
+
+// Sms Template 
+app.use('/api/sms-template',smsTemplateRoutes);
 
 
 

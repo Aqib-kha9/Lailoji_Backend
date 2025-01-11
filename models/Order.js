@@ -16,7 +16,7 @@ const orderSchema = new mongoose.Schema({
   total: { type: Number, required: true }, // Total amount of the order
   status: {
     type: String,
-    enum: ['Pending', 'Ongoing', 'Completed', 'Canceled', 'Returned', 'Failed'],
+    enum: ['Pending', 'Confirmed','Packaging', 'Ongoing', 'Delivered', 'Canceled', 'Returned', 'Failed'],
     default: 'Pending',
     required: true
   },

@@ -1,10 +1,10 @@
 import express from 'express';
 import { createCategory, getAllCategories, getCategoryById, updateCategory, deleteCategory,exportData,updateCategoryStatus } from '../controllers/category.js';
-import upload from '../middleware/multer.js'; 
+import uploadWithValidation from '../middleware/multer.js'; 
 const router = express.Router();
 
 // Create a category (with file upload for logo)
-router.post('/', upload.single('logo'), createCategory);
+router.post('/',uploadWithValidation,createCategory);
 
 // Get all categories
 router.get('/', getAllCategories);
@@ -13,7 +13,7 @@ router.get('/', getAllCategories);
 router.get('/:id', getCategoryById);
 
 // Update a category (with file upload for logo)
-router.put('/:id', upload.single('logo'), updateCategory);
+router.put('/:id', updateCategory);
 
 // Delete a category
 router.delete('/:id', deleteCategory);
